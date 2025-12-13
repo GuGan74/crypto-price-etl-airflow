@@ -1,3 +1,10 @@
 __pycache__/
 .env
 data/
+
+airflow-webserver/
+airflow-scheduler/
+CACHED/
+ERROR/
+transferring/
+
