@@ -27,6 +27,8 @@ This project demonstrates **real-world Data Engineering concepts**, including wo
 **Orchestration**
 - Apache Airflow manages task execution and dependencies
 - Docker ensures a consistent and reproducible runtime environment
+- ![unnamed](https://github.com/user-attachments/assets/f0faea5e-490d-4af3-bb05-79e83c617e47)
+
 
 ---
 
