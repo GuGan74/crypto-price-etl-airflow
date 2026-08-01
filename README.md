@@ -1,34 +1,27 @@
-# 🚀 Automated Crypto Price ETL Pipeline using Apache Airflow & Docker
+# 🚀 CryptoPulse Trading Dashboard (formerly Crypto Price ETL Pipeline)
 
 ## 📌 Project Overview
-This project implements an **end-to-end ETL (Extract, Transform, Load) pipeline** to automatically collect live cryptocurrency prices, transform the data into a structured format, and store it in a database for analysis.
+CryptoPulse is a live crypto price dashboard built on top of an automated **ETL (Extract, Transform, Load) pipeline**. It collects live cryptocurrency prices from the CoinGecko API, stores them in a Postgres database, and serves them via a FastAPI backend to a sleek React trading dashboard.
 
-The pipeline is orchestrated using **Apache Airflow**, containerized using **Docker**, and scheduled to run on a daily basis.
-
-This project demonstrates **real-world Data Engineering concepts**, including workflow orchestration, task dependencies, scheduling, API integration, and containerized deployment.
+The pipeline is orchestrated using **Apache Airflow**, containerized using **Docker**, and scheduled to run every 15 minutes. The frontend provides real-time charting and trading signals (Buy/Sell/Hold) based on simple moving average (SMA) crossovers.
 
 ---
 
 ## 🏗️ Architecture
 
-**ETL Flow:**
+**1. Data Pipeline (Airflow ETL):**
+   - **Extract:** Fetches live price data for BTC, ETH, SOL, BNB, XRP from CoinGecko.
+   - **Transform:** Cleans and restructures the JSON data into tabular format.
+   - **Load:** Loads the data into a **PostgreSQL database** (with a fallback to SQLite for local development without Docker).
 
-1. **Extract**
-   - Fetches live cryptocurrency price data from a public API
-   - Saves raw data as JSON
+**2. Backend API (FastAPI):**
+   - Connects to Postgres and provides REST endpoints for latest prices, historical data, and trading signals.
 
-2. **Transform**
-   - Cleans and restructures the raw JSON data
-   - Converts it into a CSV format
+**3. Frontend Dashboard (React + Vite):**
+   - Polls the API every 30 seconds to update charts and trading signals.
+   - Features a clean, dark-mode trading aesthetic.
 
-3. **Load**
-   - Loads the transformed data into a **SQLite database**
-
-**Orchestration**
-- Apache Airflow manages task execution and dependencies
-- Docker ensures a consistent and reproducible runtime environment
-- ![unnamed](https://github.com/user-attachments/assets/f0faea5e-490d-4af3-bb05-79e83c617e47)
-
+**Flow:** Airflow ETL ➡️ Postgres ➡️ FastAPI ➡️ React Dashboard
 
 ---
 
@@ -37,42 +30,33 @@ This project demonstrates **real-world Data Engineering concepts**, including wo
 | Category | Tools |
 |--------|------|
 | Orchestration | Apache Airflow 2.10 |
+| Backend API | FastAPI, Python |
+| Frontend | React, Vite, Recharts, Tailwind/Vanilla CSS |
+| Database | PostgreSQL (Primary), SQLite (Fallback) |
 | Containerization | Docker, Docker Compose |
-| Programming Language | Python |
 | Data Processing | Pandas |
-| Database | SQLite |
-| API | Public Cryptocurrency API |
 
 ---
 
 ## 📁 Project Structure
 
+```text
 crypto-price-etl-airflow/
-├── dags/
-│ └── crypto_dag.py
-├── Dockerfile
-├── docker-compose.yml
+├── api/                  # FastAPI backend
+│   ├── main.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── dashboard/            # React + Vite frontend
+│   ├── src/
+│   ├── package.json
+│   └── Dockerfile
+├── dags/                 # Airflow DAGs
+│   └── crypto_dag.py
+├── seed_data.py          # Script to generate dummy historical data
+├── docker-compose.yml    # Orchestrates Postgres, Airflow, API, and Dashboard
 ├── requirements.txt
-├── README.md
-└── .gitignore
-
-
-
-> Runtime-generated folders such as `data/`, `airflow-webserver/`, `airflow-scheduler/` are excluded from Git.
-
----
-
-## ⚙️ DAG Details
-
-- **DAG Name:** `crypto_etl_pipeline`
-- **Schedule:** `@daily`
-- **Executor:** LocalExecutor
-- **Tasks:**
-  1. `extract_crypto_data`
-  2. `transform_crypto_data`
-  3. `load_to_sqlite`
-
-Each task runs sequentially and depends on the successful completion of the previous task.
+└── README.md
+```
 
 ---
 
@@ -84,59 +68,33 @@ Ensure the following are installed:
 - Docker Compose
 - Git
 
----
-
 ### 2️⃣ Clone the Repository
 ```bash
 git clone https://github.com/GuGan74/crypto-price-etl-airflow.git
 cd crypto-price-etl-airflow
 ```
----
-###3️⃣ Start Airflow Using Docker
-docker-compose up -d
 
----
-###4️⃣ Access Airflow Web UI
+### 3️⃣ Start the Stack Using Docker
+Bring up Airflow, Postgres, the FastAPI backend, and the React Dashboard:
+```bash
+docker-compose up -d --build
+```
 
-http://localhost:8080
+### 4️⃣ Access the Services
 
-##Login Credentials:
-**Username: airflow
-Password: airflow
-**
-----
-###5️⃣ Run the DAG
+- **Frontend Dashboard:** [http://localhost:5173](http://localhost:5173)
+- **FastAPI Backend (Swagger UI):** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Airflow Web UI:** [http://localhost:8080](http://localhost:8080) (Username: `airflow` / Password: `airflow`)
 
-Enable the DAG crypto_etl_pipeline
+### 5️⃣ Seed the Database (Optional but recommended)
+To see charts and signals immediately without waiting for the 15-minute DAG cycles, you can seed the database with historical data:
+```bash
+python seed_data.py
+# Note: You may need to install pandas and sqlalchemy locally, or run this script inside the API container.
+```
 
-Trigger it manually or wait for the scheduled run
-
----
-###📊 Output Files
-
-After a successful DAG execution, the following files are generated:
-
-| File                     | Description                              |
-| ------------------------ | ---------------------------------------- |
-| `crypto_data.json`       | Raw extracted API data                   |
-| `crypto_transformed.csv` | Cleaned and structured data              |
-| `crypto_data.db`         | SQLite database containing crypto prices |
-
-
-----
-###Key Learnings
-
-Building ETL pipelines using Apache Airflow
-
-Writing production-ready DAGs
-
-Managing task dependencies and retries
-
-Dockerizing data pipelines
-
-Handling Airflow database initialization
-
-Debugging Airflow scheduler and webserver issues
+### 6️⃣ Run the DAG
+In the Airflow Web UI, enable the DAG `crypto_etl_pipeline`. It will run every 15 minutes automatically, keeping your dashboard updated!
 
 ---
 👤 Author

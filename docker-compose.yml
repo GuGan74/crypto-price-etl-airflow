@@ -5,6 +5,8 @@ services:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
       POSTGRES_DB: airflow
+    ports:
+      - "5433:5432"
     volumes:
       - postgres-db:/var/lib/postgresql/data
 
@@ -36,6 +38,19 @@ services:
       - ./data:/opt/airflow/data
     command: scheduler
 
+  api:
+    build: ./api
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+
+  dashboard:
+    build: ./dashboard
+    depends_on:
+      - api
+    ports:
+      - "5173:5173"
+
 volumes:
   postgres-db:
-

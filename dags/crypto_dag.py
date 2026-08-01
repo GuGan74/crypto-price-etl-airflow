@@ -6,6 +6,8 @@ import json
 import pandas as pd
 import sqlite3
 import os
+from sqlalchemy import create_engine
+import psycopg2
 
 DATA_DIR = "/opt/airflow/data"
 JSON_PATH = f"{DATA_DIR}/crypto_data.json"
@@ -17,7 +19,7 @@ def extract_crypto_data():
 
     url = "https://api.coingecko.com/api/v3/simple/price"
     params = {
-        "ids": "bitcoin,ethereum",
+        "ids": "bitcoin,ethereum,solana,binancecoin,ripple",
         "vs_currencies": "usd,inr"
     }
 
@@ -46,11 +48,22 @@ def transform_crypto_data():
     df = pd.DataFrame(records)
     df.to_csv(CSV_PATH, index=False)
 
-def load_to_sqlite():
+def load_to_database():
     df = pd.read_csv(CSV_PATH)
-    conn = sqlite3.connect(DB_PATH)
-    df.to_sql("crypto_prices", conn, if_exists="append", index=False)
-    conn.close()
+    
+    # Try Postgres first
+    try:
+        engine = create_engine("postgresql+psycopg2://airflow:airflow@postgres/airflow")
+        # Test connection
+        with engine.connect() as conn:
+            pass
+        print("Connected to Postgres successfully.")
+        df.to_sql("crypto_prices", engine, if_exists="append", index=False)
+    except Exception as e:
+        print(f"Postgres connection failed: {e}. Falling back to SQLite.")
+        conn = sqlite3.connect(DB_PATH)
+        df.to_sql("crypto_prices", conn, if_exists="append", index=False)
+        conn.close()
 
 default_args = {
     "owner": "gugan",
@@ -61,7 +74,7 @@ default_args = {
 with DAG(
     dag_id="crypto_etl_pipeline",
     default_args=default_args,
-    schedule_interval="@daily",
+    schedule_interval="*/15 * * * *",
     catchup=False,
     tags=["crypto"],
 ) as dag:
@@ -77,8 +90,8 @@ with DAG(
     )
 
     load = PythonOperator(
-        task_id="load_to_sqlite",
-        python_callable=load_to_sqlite,
+        task_id="load_to_database",
+        python_callable=load_to_database,
     )
 
     extract >> transform >> load
