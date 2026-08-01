@@ -101,4 +101,4 @@ In the Airflow Web UI, enable the DAG `crypto_etl_pipeline`. It will run every 1
 
 Gugan
 Computer Science Engineering Student
-Aspiring Data Engineer / Data Analyst
+Aspiring Data Engineer / Data Analyst 
